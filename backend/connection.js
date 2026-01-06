@@ -1,5 +1,5 @@
 // Import necessary modules
-import mysql from "mysql";
+import mysql from "mysql2";
 import getSecret from './secret_manager.js';
 import dotenv from "dotenv";
 
