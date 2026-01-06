@@ -8,6 +8,22 @@ pipeline {
   }
 
   stages {
+    stage('Debug node/npm') {
+      steps {
+        sh '''
+        echo "USER=$(whoami)"
+        echo "SHELL=$SHELL"
+        echo "PATH=$PATH"
+        command -v node || true
+        command -v npm || true
+        which node || true
+        which npm || true
+        node -v || true
+        npm -v || true
+        '''
+      }
+    }
+
     stage('Checkout') {
       steps {
         // Lấy source code từ SCM (Git) về workspace của Jenkins
