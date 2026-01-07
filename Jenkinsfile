@@ -122,22 +122,23 @@ pipeline {
 
     
     stage('SonarQube analysis') {
-      environment {
-        SCANNER_HOME = tool 'SonarQubeScanner'
-      }
       steps {
-        withSonarQubeEnv('SonarQube') {
-          sh """
-            ${SCANNER_HOME}/bin/sonar-scanner \
-              -Dsonar.projectKey=test-web \
-              -Dsonar.projectName=test-web \
-              -Dsonar.sources=backend,frontend \
-              -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/** \
-              -Dsonar.sourceEncoding=UTF-8
-          """
+        script {
+          def scannerHome = tool 'SonarQubeScanner'   // đúng với tên Tool ở Manage Jenkins -> Tools
+          withSonarQubeEnv('SonarQube Server') {      // PHẢI đúng tên ở Manage Jenkins -> System
+            sh """
+              set -euxo pipefail
+              echo "[SONAR] pwd: \$(pwd)"
+              ls -la
+
+              ${scannerHome}/bin/sonar-scanner -X
+            """
+          }
         }
       }
     }
+
+
 
     stage("Quality Gate") {
       steps {
