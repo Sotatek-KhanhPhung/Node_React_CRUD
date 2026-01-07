@@ -79,18 +79,29 @@ pipeline {
     }
 
 
-    stage('Secret scan - Gitleaks (Docker)') {
+    stage('Secret scan - Gitleaks (Git repo)') {
       steps {
         sh '''
           set -eux
+
+          echo "======================================"
+          echo "[GITLEAKS] Git repository info"
+          pwd
+          git rev-parse --is-inside-work-tree
+          git branch --show-current
+          git log -1 --oneline
+          echo "======================================"
+
           docker run --rm \
             -v "$PWD:/repo" \
             -w /repo \
             zricethezav/gitleaks:latest \
-            detect --source . \
-                   --report-format json \
-                   --report-path gitleaks-report.json \
-                   --exit-code 1
+            detect \
+              --source . \
+              --log-opts="--all" \
+              --report-format json \
+              --report-path gitleaks-report.json \
+              --exit-code 1
         '''
       }
       post {
