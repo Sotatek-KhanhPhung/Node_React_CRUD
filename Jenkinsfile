@@ -79,37 +79,33 @@ pipeline {
     }
 
 
-    stage('Secret scan - Gitleaks (remote repo url)') {
-      environment {
-        REPO_URL = 'https://github.com/Sotatek-KhanhPhung/Node_React_CRUD.git'
-      }
+    stage('Secret scan - Gitleaks (Docker)') {
       steps {
         sh '''
-          set -euo pipefail
-          echo "[GITLEAKS] Will scan remote repo: ${REPO_URL}"
+          set -eux
+
+          echo "======================================"
+          echo "[GITLEAKS] Current working directory:"
+          pwd
+          echo "======================================"
+
+          echo "[GITLEAKS] Listing top-level files:"
+          ls -lah
+
+          echo "======================================"
+          echo "[GITLEAKS] Running scan on directory:"
+          echo "SOURCE = $(pwd)"
+          echo "======================================"
 
           docker run --rm \
-            -e REPO_URL="$REPO_URL" \
-            -v "$PWD:/out" -w /out \
-            zricethezav/gitleaks:latest sh -lc '
-              set -euo pipefail
-              echo "[GITLEAKS] container pwd: $(pwd)"
-              echo "[GITLEAKS] cloning to /tmp/repo ..."
-              rm -rf /tmp/repo
-              git clone --quiet "$REPO_URL" /tmp/repo
-
-              echo "[GITLEAKS] repo cloned, now scanning..."
-              cd /tmp/repo
-              echo "[GITLEAKS] scanning directory: $(pwd)"
-              git log -1 --oneline || true
-
-              gitleaks detect \
-                --source . \
-                --log-opts="--all" \
-                --report-format json \
-                --report-path /out/gitleaks-report.json \
-                --exit-code 1
-            '
+            -v "$PWD:/repo" \
+            -w /repo \
+            zricethezav/gitleaks:latest \
+            detect \
+              --source . \
+              --report-format json \
+              --report-path gitleaks-report.json \
+              --exit-code 1
         '''
       }
       post {
