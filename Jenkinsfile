@@ -126,15 +126,16 @@ pipeline {
         SCANNER_HOME = tool 'SonarQubeScanner'
       }
       steps {
-        script {
-          withSonarQubeEnv('SonarQube') {
-            sh "${SCANNER_HOME}/bin/sonar-scanner
-            -Dsonar.projectKey=test-web\
-            -Dsonar.projectName=test-web"
-        
-          }
+        withSonarQubeEnv('SonarQube') {
+          sh """
+            ${SCANNER_HOME}/bin/sonar-scanner \
+              -Dsonar.projectKey=test-web \
+              -Dsonar.projectName=test-web \
+              -Dsonar.sources=backend,frontend \
+              -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/** \
+              -Dsonar.sourceEncoding=UTF-8
+          """
         }
-        echo 'Code analysis completed.'
       }
     }
 
