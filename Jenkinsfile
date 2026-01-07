@@ -76,12 +76,17 @@ pipeline {
 
     stage('Publish ESLint reports') {
       steps {
-        // Lưu report như artifact để tải về
-        archiveArtifacts artifacts: '**/eslint-checkstyle.xml', fingerprint: true
+        recordIssues(
+          id: 'eslint-backend',
+          tools: [checkStyle(pattern: 'backend/eslint-checkstyle.xml')]
+        )
 
-        // Nếu bạn cài plugin "Warnings Next Generation" thì bật dòng dưới để Jenkins đọc file và show lỗi theo file/line
-        recordIssues enabledForFailure: true, tool: checkStyle(pattern: '**/eslint-checkstyle.xml')
+        recordIssues(
+          id: 'eslint-frontend',
+          tools: [checkStyle(pattern: 'frontend/eslint-checkstyle.xml')]
+        )
       }
     }
+
   }
 }
