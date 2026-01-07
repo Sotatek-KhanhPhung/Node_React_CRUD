@@ -82,7 +82,7 @@ pipeline {
       steps {
         echo 'Running TruffleHog scan ...'
         // Run TruffleHog scan on the checked-out repository
-        sh 'trufflehog git https://github.com/ScaleSec/vulnado.git --json --no-update > trufflehog-results.json'
+        sh 'trufflehog git https://github.com/soocrates/Node_React_CRUD.git --json --no-update > trufflehog-results.json'
         // Optionally, you can archive the results
         archiveArtifacts artifacts: 'trufflehog-results.json', allowEmptyArchive: true
         // Read and print results to console
