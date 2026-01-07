@@ -1,17 +1,24 @@
 pipeline {
   agent any
 
-  tools {
-    // Dùng NodeJS đã cấu hình trong Jenkins (Manage Jenkins → Global Tool Configuration)
-    // Bạn đặt tên tool là gì thì để đúng tên đó ở đây.
-    nodejs 'node-22'
-  }
 
   stages {
     stage('Checkout') {
       steps {
         // Lấy source code từ SCM (Git) về workspace của Jenkins
         checkout scm
+      }
+    }
+
+    stage('Verify Node') {
+      steps {
+        sh '''
+          uname -m
+          node -v
+          npm -v
+          which node
+          which npm
+        '''
       }
     }
 
