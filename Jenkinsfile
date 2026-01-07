@@ -126,11 +126,15 @@ pipeline {
         SCANNER_HOME = tool 'SonarQubeScanner'
       }
       steps {
-        withSonarQubeEnv('SonarQube') {
-          sh "${SCANNER_HOME}/bin/sonar-scanner
-          -Dsonar.projectKey=test-web\
-          -Dsonar.projectName=test-web"
+        script {
+          withSonarQubeEnv('SonarQube') {
+            sh "${SCANNER_HOME}/bin/sonar-scanner
+            -Dsonar.projectKey=test-web\
+            -Dsonar.projectName=test-web"
+        
+          }
         }
+        echo 'Code analysis completed.'
       }
     }
 
