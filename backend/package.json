@@ -8,7 +8,7 @@
     "start": "nodemon index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:ci": "eslint . -f checkstyle -o eslint-checkstyle.xml"
+    "lint:ci": "eslint . -f eslint-formatter-checkstyle -o eslint-checkstyle.xml"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
+    "eslint-formatter-checkstyle": "^9.0.1",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.0.0",
     "typescript-eslint": "^8.52.0"
