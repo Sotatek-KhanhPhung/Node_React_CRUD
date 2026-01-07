@@ -127,7 +127,9 @@ pipeline {
       }
       steps {
         withSonarQubeEnv('SonarQube') {
-          sh "${SCANNER_HOME}/bin/sonar-scanner"
+          sh "${SCANNER_HOME}/bin/sonar-scanner
+          -Dsonar.projectKey=test-web\
+          -Dsonar.projectName=test-web"
         }
       }
     }
