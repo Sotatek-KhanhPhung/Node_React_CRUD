@@ -78,20 +78,44 @@ pipeline {
       }
     }
 
-    stage('TruffleHog') {
-      steps {
-        echo 'Running TruffleHog scan ...'
-        // Run TruffleHog scan on the checked-out repository
-        sh 'trufflehog git https://github.com/Sotatek-KhanhPhung/Node_React_CRUD.git --json --no-update > trufflehog-results.json'
-        // Optionally, you can archive the results
-        archiveArtifacts artifacts: 'trufflehog-results.json', allowEmptyArchive: true
-        // Read and print results to console
-        script {
-            def truffleHogResults = readFile('trufflehog-results.json')
-            echo "TruffleHog Scan Results: ${truffleHogResults}"
+    stage('Secrets Detection') {
+            parallel {
+                stage('TruffleHog') {
+                    steps {
+                        echo 'Running TruffleHog scan ...'
+                        // Run TruffleHog scan on the checked-out repository
+                        sh 'trufflehog git https://github.com/ScaleSec/vulnado.git --json --no-update > trufflehog-results.json'
+                        // Optionally, you can archive the results
+                        archiveArtifacts artifacts: 'trufflehog-results.json', allowEmptyArchive: true
+                        // Read and print results to console
+                        script {
+                            def truffleHogResults = readFile('trufflehog-results.json')
+                            echo "TruffleHog Scan Results: ${truffleHogResults}"
+                        }
+                    }
+                }
+                stage('Detect Secrets') {
+                    steps {
+                        script {
+                            try {
+                                // Run detect-secrets scan
+                                sh 'detect-secrets scan > detectSecretsResults.json'
+
+                                // Archive the scan results
+                                archiveArtifacts artifacts: 'detectSecretsResults.json', allowEmptyArchive: true
+
+                                // Read and print results to console
+                                def detectSecretsResults = readFile('detectSecretsResults.json')
+                                echo "Detect Secrets Scan Results: ${detectSecretsResults}"
+                            } catch (Exception e) {
+                                echo "Error running detect-secrets: ${e.getMessage()}"
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
-    }
+
 
   }
 }
