@@ -1,0 +1,8 @@
+-----TEST-----
+
+password=abc123
+password=*****
+DB_PASSWORD=xyz
+
+DB_NAME=test
+DB_USER=user
