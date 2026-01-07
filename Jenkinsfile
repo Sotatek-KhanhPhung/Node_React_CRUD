@@ -1,6 +1,14 @@
 pipeline {
   agent any
 
+  tools {
+    sonarQubeScanner 'sonar-scanner'
+  }
+
+  environment {
+    SONARQUBE_ENV = 'sonarqube'
+  }
+  
 
   stages {
     stage('Checkout') {
@@ -111,6 +119,34 @@ pipeline {
       post {
         always {
           archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+        }
+      }
+    }
+
+    
+    stage('SonarQube Scan') {
+      steps {
+        withSonarQubeEnv("${SONARQUBE_ENV}") {
+          sh '''
+            set -euxo pipefail
+            echo "[SONAR] Workspace: $(pwd)"
+            sonar-scanner \
+              -Dsonar.projectKey=test-web \
+              -Dsonar.projectName=test-web \
+              -Dsonar.sources=backend/src,frontend/src \
+              -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/** \
+              -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info,frontend/coverage/lcov.info \
+              -Dsonar.sourceEncoding=UTF-8
+          '''
+        }
+      }
+    }
+
+    stage('Quality Gate') {
+      steps {
+        timeout(time: 10, unit: 'MINUTES') {
+          // Fail pipeline nếu Quality Gate fail
+          waitForQualityGate abortPipeline: true
         }
       }
     }
