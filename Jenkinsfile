@@ -121,33 +121,25 @@ pipeline {
     }
 
     
-    stage('SonarQube Scan') {
+    stage('SonarQube analysis') {
+      environment {
+        SCANNER_HOME = tool 'SonarQubeScanner'
+      }
       steps {
-        withSonarQubeEnv("${SONARQUBE_ENV}") {
-          sh '''
-            set -euxo pipefail
-            echo "[SONAR] Workspace: $(pwd)"
-            sonar-scanner \
-              -Dsonar.projectKey=test-web \
-              -Dsonar.projectName=test-web \
-              -Dsonar.sources=backend/src,frontend/src \
-              -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/** \
-              -Dsonar.javascript.lcov.reportPaths=backend/coverage/lcov.info,frontend/coverage/lcov.info \
-              -Dsonar.sourceEncoding=UTF-8
-          '''
+        withSonarQubeEnv('SonarQube') {
+          sh "${SCANNER_HOME}/bin/sonar-scanner"
         }
       }
     }
 
-    stage('Quality Gate') {
-      steps {
-        timeout(time: 10, unit: 'MINUTES') {
-          // Fail pipeline nếu Quality Gate fail
-          waitForQualityGate abortPipeline: true
-        }
+    stage("Quality Gate"){
+      timeout(time: 1, unit: 'HOURS') {
+        def qg = waitForQualityGate()
+          if (qg.status != 'OK') {
+            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+          }
       }
     }
-
 
   }
 }
