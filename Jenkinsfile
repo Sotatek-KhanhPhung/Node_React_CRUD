@@ -42,38 +42,6 @@ pipeline {
       }
     }
 
-#    stage('ESLint') {
-#      parallel {
-#        stage('Lint backend') {
-#          steps {
-#            dir('backend') {
-#              sh 'npm ci'
-#              sh 'npm run lint:ci || true'
-#            }
-#          }
-#          post {
-#            always {
-#              recordIssues tools: [checkStyle(pattern: 'backend/eslint-checkstyle.xml')]
-#            }
-#          }
-#        }
-
-#        stage('Lint frontend') {
-#          steps {
-#            dir('frontend') {
-#              sh 'npm ci'
-#              sh 'npm run lint:ci || true'
-#            }
-#          }
-#          post {
-#            always {
-#              recordIssues tools: [checkStyle(pattern: 'frontend/eslint-checkstyle.xml')]
-#            }
-#          }
-#        }
-#      }
-#    }
-
     stage('ESLint') {
       parallel {
         stage('Lint backend') {
