@@ -77,5 +77,21 @@ pipeline {
         )
       }
     }
+
+    stage('TruffleHog') {
+      steps {
+        echo 'Running TruffleHog scan ...'
+        // Run TruffleHog scan on the checked-out repository
+        sh 'trufflehog git https://github.com/ScaleSec/vulnado.git --json --no-update > trufflehog-results.json'
+        // Optionally, you can archive the results
+        archiveArtifacts artifacts: 'trufflehog-results.json', allowEmptyArchive: true
+        // Read and print results to console
+        script {
+            def truffleHogResults = readFile('trufflehog-results.json')
+            echo "TruffleHog Scan Results: ${truffleHogResults}"
+        }
+      }
+    }
+
   }
 }
