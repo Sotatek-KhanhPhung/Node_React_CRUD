@@ -6,9 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "lint:ci": "eslint . -f eslint-formatter-checkstyle -o eslint-checkstyle.xml"
+    "lint:ci": "eslint . --max-warnings 0 --format eslint-formatter-checkstyle --output-file eslint-checkstyle.xml"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.2",
     "eslint-formatter-checkstyle": "^9.0.1",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.0.0",

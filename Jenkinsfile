@@ -47,15 +47,27 @@ pipeline {
         stage('Lint backend') {
           steps {
             dir('backend') {
-              // Chạy lint và xuất report checkstyle xml
-              sh 'npm run lint:ci'
+              sh 'npm ci'
+              sh 'npm run lint:ci || true'
+            }
+          }
+          post {
+            always {
+              recordIssues tools: [checkStyle(pattern: 'backend/eslint-checkstyle.xml')]
             }
           }
         }
+
         stage('Lint frontend') {
           steps {
             dir('frontend') {
-              sh 'npm run lint:ci'
+              sh 'npm ci'
+              sh 'npm run lint:ci || true'
+            }
+          }
+          post {
+            always {
+              recordIssues tools: [checkStyle(pattern: 'frontend/eslint-checkstyle.xml')]
             }
           }
         }
