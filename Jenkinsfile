@@ -77,12 +77,14 @@ pipeline {
     stage('Publish ESLint reports') {
       steps {
         recordIssues(
-          id: 'eslint-backend',
+          id: 'lint-backend',
+          name: 'ESLint Backend',
           tools: [checkStyle(pattern: 'backend/eslint-checkstyle.xml')]
         )
 
         recordIssues(
-          id: 'eslint-frontend',
+          id: 'lint-frontend',
+          name: 'ESLint Frontend',
           tools: [checkStyle(pattern: 'frontend/eslint-checkstyle.xml')]
         )
       }
