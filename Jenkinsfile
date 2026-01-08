@@ -253,24 +253,25 @@
       }
     }
 
+
     stage('Deploy to Swarm (remote)') {
       steps {
         sshagent(credentials: ['swarm-node']) {
           sh '''
             set -euxo pipefail
 
-            # chạy docker stack deploy trên swarm manager 192.168.215.181
-            ssh -o StrictHostKeyChecking=no ${SWARM_USER}@${SWARM_HOST} "
+            ssh -o StrictHostKeyChecking=no registry@192.168.215.181 << 'EOF'
               set -euxo pipefail
-              docker node ls >/dev/null
-              export IMAGE_TAG='${TAG}'
-              docker stack deploy -c '${STACK_FILE}' '${STACK_NAME}'
-              docker stack services '${STACK_NAME}'
-            "
+              docker node ls
+              export IMAGE_TAG=build-${BUILD_NUMBER}
+              docker stack deploy -c /opt/stacks/test-web/stack.yml test-web
+              docker stack services test-web
+            EOF
           '''
         }
       }
     }
+
 
 
   }
