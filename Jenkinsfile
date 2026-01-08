@@ -152,7 +152,7 @@ pipeline {
       steps {
         sh 'set -eux'
         sh 'mkdir -p trivy-reports'
-        sh 'trivy fs --format table -o trivy-reports/fs-report.html .'
+        sh 'trivy fs --format table -o trivy-reports/fs-report.html'
       }
     }
     
