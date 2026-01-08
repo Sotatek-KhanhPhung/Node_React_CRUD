@@ -1,0 +1,216 @@
+name: ci-cd
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: 192.168.215.181:5000
+  PROJECT: test-web
+  TAG: build-${{ github.run_number }}
+  BE_IMAGE: 192.168.215.181:5000/test-web/backend:build-${{ github.run_number }}
+  FE_IMAGE: 192.168.215.181:5000/test-web/frontend:build-${{ github.run_number }}
+  SWARM_HOST: 192.168.215.181
+  SWARM_USER: registry
+  STACK_FILE: /opt/stacks/test-web/stack.yml
+  STACK_NAME: test-web
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Node
+        run: |
+          set -eux
+          uname -m
+          node -v
+          npm -v
+          which node
+          which npm
+
+  npm_ci:
+    runs-on: self-hosted
+    needs: [verify]
+    strategy:
+      matrix:
+        app: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: npm ci (${{ matrix.app }})
+        working-directory: ${{ matrix.app }}
+        run: |
+          set -eux
+          npm ci
+
+  eslint:
+    runs-on: self-hosted
+    needs: [npm_ci]
+    strategy:
+      matrix:
+        app: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint (${{ matrix.app }})
+        working-directory: ${{ matrix.app }}
+        run: |
+          set -eux
+          npm run lint:ci || true
+
+      - name: Upload ESLint report (${{ matrix.app }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-${{ matrix.app }}
+          path: ${{ matrix.app }}/eslint-checkstyle.xml
+          if-no-files-found: warn
+
+  gitleaks:
+    runs-on: self-hosted
+    needs: [verify]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gitleaks (Docker)
+        run: |
+          set -eux
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            zricethezav/gitleaks:latest \
+            detect \
+              --source . \
+              --report-format json \
+              --report-path gitleaks-report.json \
+              --exit-code 1
+
+      - name: Upload gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+          if-no-files-found: warn
+
+  sonar:
+    runs-on: self-hosted
+    needs: [eslint, gitleaks]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v3
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+        timeout-minutes: 60
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  trivy_fs:
+    runs-on: self-hosted
+    needs: [verify]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy FS scan (vuln,secret)
+        run: |
+          set -euxo pipefail
+          mkdir -p trivy-reports
+          # scan source repo giống Jenkinsfile (fs scan)
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -v "$PWD/.trivycache:/root/.cache/" \
+            aquasec/trivy:latest \
+            fs --scanners vuln,secret --format table \
+            -o /workspace/trivy-reports/fs-report.txt \
+            /workspace
+
+      - name: Upload trivy fs report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-report
+          path: trivy-reports/fs-report.txt
+          if-no-files-found: warn
+
+  build_scan_push:
+    runs-on: self-hosted
+    needs: [sonar, trivy_fs]
+    strategy:
+      matrix:
+        app: [backend, frontend]
+        include:
+          - app: backend
+            image: 192.168.215.181:5000/test-web/backend:build-${{ github.run_number }}
+            context: backend
+            report: trivy-reports/backend-image-report.txt
+          - app: frontend
+            image: 192.168.215.181:5000/test-web/frontend:build-${{ github.run_number }}
+            context: frontend
+            report: trivy-reports/frontend-image-report.txt
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login to private registry
+        run: |
+          set -eux
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login $REGISTRY -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+      - name: Build image (${{ matrix.app }})
+        run: |
+          set -euxo pipefail
+          docker build -t "${{ matrix.image }}" "${{ matrix.context }}"
+
+      - name: Trivy image scan (${{ matrix.app }})
+        run: |
+          set -euxo pipefail
+          mkdir -p trivy-reports
+          # scan NGAY image vừa build (không pull từ registry)
+          trivy image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --format table \
+            -o "${{ matrix.report }}" \
+            "${{ matrix.image }}"
+
+      - name: Upload trivy image report (${{ matrix.app }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-${{ matrix.app }}
+          path: ${{ matrix.report }}
+          if-no-files-found: warn
+
+      - name: Push image (${{ matrix.app }})
+        run: |
+          set -euxo pipefail
+          docker push "${{ matrix.image }}"
+
+  deploy_swarm:
+    runs-on: self-hosted
+    needs: [build_scan_push]
+    steps:
+      - name: Setup SSH key
+        run: |
+          set -eux
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SWARM_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SWARM_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy to Swarm (remote)
+        run: |
+          set -euxo pipefail
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes $SWARM_USER@$SWARM_HOST << EOF
+            set -euxo pipefail
+            docker node ls
+            export IMAGE_TAG="${TAG}"
+            docker stack deploy -c "${STACK_FILE}" "${STACK_NAME}"
+            docker stack services "${STACK_NAME}"
+          EOF
