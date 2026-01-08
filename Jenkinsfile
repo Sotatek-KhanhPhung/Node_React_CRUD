@@ -256,8 +256,8 @@
 
     stage('Test SSH') {
       steps {
-        sshagent(credentials: ['swarm-node']) {
-          sh 'ssh -o StrictHostKeyChecking=no registry@192.168.215.181 "whoami && hostname"'
+        withCredentials([usernameAndPassword(credentialsId: 'test-cred', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')]) {
+          sh 'sshpass -p "${SSH_PASS}" ssh -o StrictHostKeyChecking=no "${SSH_USER}"@192.1678.215.181 "echo 'I am connected!'"'
         }
       }
     }
