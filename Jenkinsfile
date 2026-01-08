@@ -154,14 +154,14 @@
           dir('backend') {
             sh '''
               set -eux
-              docker build -t pnkhanh211/test-web-backend:latest .
+              docker build -t pnkhanh211/test-web-backend:v${BUILD_TAG} .
             '''
           }
 
           dir('frontend') {
             sh '''
               set -eux
-              docker build -t pnkhanh211/test-web-frontend:latest .
+              docker build -t pnkhanh211/test-web-frontend:v${BUILD_TAG} .
             '''
           }
         }
