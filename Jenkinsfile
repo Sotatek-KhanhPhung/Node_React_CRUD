@@ -255,7 +255,7 @@
 
     stage('Deploy to Swarm (remote)') {
       steps {
-        sshagent(credentials: ['swarm-ssh']) {
+        sshagent(credentials: ['swarm-node']) {
           sh '''
             set -euxo pipefail
 
