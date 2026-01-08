@@ -257,7 +257,9 @@
     stage('Test SSH') {
       steps {
         withCredentials([usernameAndPassword(credentialsId: 'test-cred', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')]) {
-          sh 'sshpass -p "${SSH_PASS}" ssh -o StrictHostKeyChecking=no "${SSH_USER}"@192.1678.215.181 "echo 'I am connected!'"'
+          sh '''
+            sshpass -p "${SSH_PASS}" ssh -o StrictHostKeyChecking=no "${SSH_USER}"@192.1678.215.181 "echo 'I am connected!'"
+          '''
         }
       }
     }
