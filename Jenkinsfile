@@ -256,7 +256,7 @@
 
     stage('Test SSH') {
       steps {
-        sshagent(credentials: ['registry']) {
+        sshagent(credentials: ['swarm-node']) {
           sh 'ssh -o StrictHostKeyChecking=no registry@192.168.215.181 "whoami && hostname"'
         }
       }
