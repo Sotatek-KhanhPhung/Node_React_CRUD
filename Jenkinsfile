@@ -1,4 +1,4 @@
-pipeline {
+ pipeline {
   agent any
 
 
@@ -173,6 +173,7 @@ pipeline {
           archiveArtifacts artifacts: 'trivy-reports/*', fingerprint: true
         }
       }
+    }
     
     stage('Build Image') {
       parallel {
