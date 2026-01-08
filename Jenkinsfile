@@ -152,6 +152,7 @@ pipeline {
       steps {
         set -eux
         mkdir -p trivy-report
+        cd trivy-report
         sh 'trivy fs --format table -o fs-report.html .'
       }
     }
