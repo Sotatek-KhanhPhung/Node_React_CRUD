@@ -11,8 +11,6 @@
     BE_IMAGE = "${REGISTRY}/test-web/backend:${TAG}"
     FE_IMAGE = "${REGISTRY}/test-web/frontend:${TAG}"
 
-    SWARM_HOST = "192.168.215.181"
-    SWARM_USER = "registry"
     STACK_FILE = "/opt/stacks/test-web/stack.yml"
     STACK_NAME = "test-web"
   }
@@ -252,25 +250,20 @@
       }
     }
 
-    stage('Deploy to Swarm (remote)') {
+    stage('Deploy to Swarm (local)') {
       steps {
-        sshagent(credentials: ['swarm-node']) {
-          sh '''
-            set -euxo pipefail
+        sh '''
+          set -euxo pipefail
 
-            ssh -o StrictHostKeyChecking=no registry@192.168.215.181 << 'EOF'
-              set -euxo pipefail
-              docker node ls
-              export IMAGE_TAG=build-${BUILD_NUMBER}
-              docker stack deploy -c /opt/stacks/test-web/stack.yml test-web
-              docker stack services test-web
-            EOF
-          '''
-        }
+          docker node ls >/dev/null
+
+          export IMAGE_TAG="$TAG"
+
+          docker stack deploy --with-registry-auth -c "$STACK_FILE" "$STACK_NAME"
+          docker stack services "$STACK_NAME"
+        '''
       }
     }
-
-
 
   }
 }

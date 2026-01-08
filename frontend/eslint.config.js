@@ -5,7 +5,6 @@ import reactHooksPlugin from "eslint-plugin-react-hooks";
 import reactRefreshPlugin from "eslint-plugin-react-refresh";
 
 export default [
-  // Không lint thư mục build và vendor
   { ignores: ["dist/**", "node_modules/**"] },
 
   {
