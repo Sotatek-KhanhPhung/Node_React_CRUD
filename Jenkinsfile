@@ -150,11 +150,9 @@ pipeline {
 
     stage('Trivy FS Scan') {
       steps {
-        sh '''
-          set -eux
-          chmod -R u+w .
-          trivy fs --format table -o fs-report.html .
-        ```
+        sh 'set -eux'
+        sh 'chmod -R u+w .'
+        sh 'trivy fs --format table -o fs-report.html .'
       }
     }
 
