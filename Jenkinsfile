@@ -148,32 +148,28 @@
       }
     }
 
+
     stage('Trivy FS Scan') {
       steps {
         sh '''
           set -euxo pipefail
-          echo "[TRIVY] WORKSPACE=$WORKSPACE"
-          echo "[TRIVY] pwd=$(pwd)"
-          ls -la
-
           mkdir -p "$WORKSPACE/trivy-reports"
-          ls -la "$WORKSPACE/trivy-reports"
-  
-          trivy fs \
-            --scanners vuln,secret \
-            --format table \
-            -o "$WORKSPACE/trivy-reports/fs-report.txt" \
-            "$WORKSPACE"/
 
-          ls -la "$WORKSPACE/trivy-reports"
-        '''
+          docker run --rm \
+            -v "$WORKSPACE:/workspace" \
+            -v "$WORKSPACE/.trivycache:/root/.cache/" \
+            aquasec/trivy:latest \
+            fs --scanners vuln,secret --format table \
+            -o /workspace/trivy-reports/fs-report.txt \
+            /workspace
+         '''
       }
       post {
-        always {
-          archiveArtifacts artifacts: 'trivy-reports/*', fingerprint: true
-        }
+        always { archiveArtifacts artifacts: 'trivy-reports/*', fingerprint: true }
       }
     }
+
+
     
     stage('Build Image') {
       parallel {
