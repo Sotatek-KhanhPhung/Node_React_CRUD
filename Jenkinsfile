@@ -150,11 +150,29 @@ pipeline {
 
     stage('Trivy FS Scan') {
       steps {
-        sh 'set -eux'
-        sh 'mkdir -p trivy-reports'
-        sh 'trivy fs --format table -o trivy-reports/fs-report.html .'
+        sh '''
+          set -euxo pipefail
+          echo "[TRIVY] WORKSPACE=$WORKSPACE"
+          echo "[TRIVY] pwd=$(pwd)"
+          ls -la
+
+          mkdir -p "$WORKSPACE/trivy-reports"
+          ls -la "$WORKSPACE/trivy-reports"
+  
+          trivy fs \
+            --scanners vuln,secret \
+            --format table \
+            -o "$WORKSPACE/trivy-reports/fs-report.txt" \
+            "$WORKSPACE"
+
+          ls -la "$WORKSPACE/trivy-reports"
+        '''
       }
-    }
+      post {
+        always {
+          archiveArtifacts artifacts: 'trivy-reports/*', fingerprint: true
+        }
+      }
     
     stage('Build Image') {
       parallel {
