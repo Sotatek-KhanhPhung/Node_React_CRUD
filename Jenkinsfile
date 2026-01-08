@@ -156,7 +156,7 @@ pipeline {
       }
     }
     
-    stage('Build Image) {
+    stage('Build Image') {
       parallel {
         stage('Build-Tag & Push Backend Docker Image') {
           steps {
