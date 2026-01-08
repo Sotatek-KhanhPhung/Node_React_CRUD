@@ -32,7 +32,6 @@
         stage('Backend npm ci') {
           steps {
             dir('backend') {
-              // npm ci: cài dependency đúng theo package-lock (ổn định và nhanh cho CI)
               sh 'npm ci'
             }
           }
@@ -155,14 +154,14 @@
           dir('backend') {
             sh '''
               set -eux
-              docker build -t test-web-backend:latest .
+              docker build -t pnkhanh211/test-web-backend:latest .
             '''
           }
 
           dir('frontend') {
             sh '''
               set -eux
-              docker build -t test-web-frontend:latest .
+              docker build -t pnkhanh211/test-web-frontend:latest .
             '''
           }
         }
@@ -190,5 +189,47 @@
         always { archiveArtifacts artifacts: 'trivy-reports/*', fingerprint: true }
       }
     }
+
+
+    stage('Trivy Image Scan') {
+      parallel {
+
+        stage('Trivy Scan Backend Image') {
+          steps {
+            sh '''
+              set -euxo pipefail
+              mkdir -p "$WORKSPACE/trivy-reports"
+
+              trivy image \
+                --scanners vuln \
+                --severity HIGH,CRITICAL \
+                --format table \
+                -o "$WORKSPACE/trivy-reports/backend-image-report.txt" \
+                test-web-backend:latest
+            '''
+          }
+        }
+
+        stage('Trivy Scan Frontend Image') {
+          steps {
+            sh '''
+              set -euxo pipefail
+              mkdir -p "$WORKSPACE/trivy-reports"
+
+              trivy image \
+                --scanners vuln \
+                --severity HIGH,CRITICAL \
+                --format table \
+                -o "$WORKSPACE/trivy-reports/frontend-image-report.txt" \
+                test-web-frontend:latest
+            '''
+          }
+        }
+      }
+    }
+
+
+
+
   }
 }
