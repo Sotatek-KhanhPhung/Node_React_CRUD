@@ -150,6 +150,8 @@ pipeline {
 
     stage('Trivy FS Scan') {
       steps {
+        set -eux
+        mkdir -p trivy-report
         sh 'trivy fs --format table -o fs-report.html .'
       }
     }
