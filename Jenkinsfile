@@ -254,6 +254,16 @@
     }
 
 
+    stage('Test SSH') {
+      steps {
+        sshagent(credentials: ['registry']) {
+          sh 'ssh -o StrictHostKeyChecking=no registry@192.168.215.181 "whoami && hostname"'
+        }
+      }
+    }
+
+
+
     stage('Deploy to Swarm (remote)') {
       steps {
         sshagent(credentials: ['swarm-node']) {
