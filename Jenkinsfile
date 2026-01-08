@@ -163,7 +163,7 @@
             --scanners vuln,secret \
             --format table \
             -o "$WORKSPACE/trivy-reports/fs-report.txt" \
-            "$WORKSPACE"
+            "$WORKSPACE"/
 
           ls -la "$WORKSPACE/trivy-reports"
         '''
