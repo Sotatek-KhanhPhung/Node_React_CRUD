@@ -21,7 +21,6 @@
   stages {
     stage('Checkout') {
       steps {
-        // Lấy source code từ SCM (Git) về workspace của Jenkins
         checkout scm
       }
     }
@@ -134,8 +133,8 @@
     stage('SonarQube analysis') {
       steps {
         script {
-          def scannerHome = tool 'SonarQubeScanner'   // đúng với tên Tool ở Manage Jenkins -> Tools
-          withSonarQubeEnv('SonarQube Server') {      // PHẢI đúng tên ở Manage Jenkins -> System
+          def scannerHome = tool 'SonarQubeScanner'
+          withSonarQubeEnv('SonarQube Server') { 
             sh """
               set -euxo pipefail
               echo "[SONAR] pwd: \$(pwd)"
@@ -252,19 +251,6 @@
         '''
       }
     }
-
-
-    stage('Test SSH') {
-      steps {
-        withCredentials([usernameAndPassword(credentialsId: 'test-cred', usernameVariable: 'SSH_USER', passwordVariable: 'SSH_PASS')]) {
-          sh '''
-            sshpass -p "${SSH_PASS}" ssh -o StrictHostKeyChecking=no "${SSH_USER}"@192.1678.215.181 "echo 'I am connected!'"
-          '''
-        }
-      }
-    }
-
-
 
     stage('Deploy to Swarm (remote)') {
       steps {
