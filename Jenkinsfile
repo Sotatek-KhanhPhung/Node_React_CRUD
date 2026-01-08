@@ -149,6 +149,28 @@
     }
 
 
+    stage('Build Docker Images') {
+      steps {
+        script {
+          dir('backend') {
+            sh '''
+              set -eux
+              docker build -t test-web-backend:latest .
+            '''
+          }
+
+          dir('frontend') {
+            sh '''
+              set -eux
+              docker build -t test-web-frontend:latest .
+            '''
+          }
+        }
+      }
+    }
+
+
+
     stage('Trivy FS Scan') {
       steps {
         sh '''
@@ -168,78 +190,5 @@
         always { archiveArtifacts artifacts: 'trivy-reports/*', fingerprint: true }
       }
     }
-
-
-    stage('Build Image') {
-      parallel {
-
-        stage('Build-Tag & Push Backend Docker Image') {
-          steps {
-            script {
-              withDockerRegistry(credentialsId: 'docker-cred') {
-                dir('backend') {
-                  sh '''
-                    set -euxo pipefail
-
-                    IMAGE="pnkhanh211/backend:latest"
-                    REPORT_DIR="$WORKSPACE/trivy-reports"
-                    mkdir -p "$REPORT_DIR"
-
-                    docker build -t "$IMAGE" .
-
-                    docker run --rm \
-                      -v /var/run/docker.sock:/var/run/docker.sock \
-                      -v "$WORKSPACE:/workspace" \
-                      aquasec/trivy:latest \
-                      image --scanners vuln,secret \
-                      --format table \
-                      -o "/workspace/trivy-reports/backend-image-report.txt" \
-                      "$IMAGE"
-
-                    docker push "$IMAGE"
-                  '''
-                }
-              }
-            }
-          }
-        }
-
-        stage('Build-Tag & Push Frontend Docker Image') {
-          steps {
-            script {
-              withDockerRegistry(credentialsId: 'docker-cred') {
-                dir('frontend') {
-                  sh '''
-                    set -euxo pipefail
-
-                    IMAGE="pnkhanh211/frontend:latest"
-                    REPORT_DIR="$WORKSPACE/trivy-reports"
-                    mkdir -p "$REPORT_DIR"
- 
-                    docker build -t "$IMAGE" .
-
-                    docker run --rm \
-                      -v /var/run/docker.sock:/var/run/docker.sock \
-                      -v "$WORKSPACE:/workspace" \
-                      aquasec/trivy:latest \
-                      image --scanners vuln,secret \
-                      --format table \
-                      -o "/workspace/trivy-reports/frontend-image-report.txt" \
-                      "$IMAGE"
-
-                # Push image
-                    docker push "$IMAGE"
-                  '''
-                }
-              }
-            }
-          }
-        }
-
-      }
-    }
-
-    
-
   }
 }
