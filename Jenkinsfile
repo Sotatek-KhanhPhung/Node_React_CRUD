@@ -4,6 +4,17 @@
 
   environment {
     SONARQUBE_ENV = 'sonarqube'
+
+    REGISTRY = "192.168.215.181:5000"
+    TAG = "build-${BUILD_NUMBER}"
+
+    BE_IMAGE = "${REGISTRY}/test-web/backend:${TAG}"
+    FE_IMAGE = "${REGISTRY}/test-web/frontend:${TAG}"
+
+    SWARM_HOST = "192.168.215.181"
+    SWARM_USER = "registry"
+    STACK_FILE = "/opt/stacks/test-web/stack.yml"
+    STACK_NAME = "test-web"
   }
   
 
@@ -148,26 +159,30 @@
     }
 
 
-    stage('Build Docker Images') {
-      steps {
-        script {
-          dir('backend') {
-            sh '''
-              set -eux
-              docker build -t pnkhanh211/test-web-backend:v${BUILD_NUMBER} .
-            '''
+    stage('Build Images') {
+      parallel {
+        stage('Build Backend') {
+          steps {
+            dir('backend') {
+              sh '''
+                set -euxo pipefail
+                docker build -t "$BE_IMAGE" .
+              '''
+            }
           }
-
-          dir('frontend') {
-            sh '''
-              set -eux
-              docker build -t pnkhanh211/test-web-frontend:v${BUILD_NUMBER} .
-            '''
+        }
+        stage('Build Frontend') {
+          steps {
+            dir('frontend') {
+              sh '''
+                set -euxo pipefail
+                docker build -t "$FE_IMAGE" .
+              '''
+            }
           }
         }
       }
     }
-
 
 
     stage('Trivy FS Scan') {
@@ -228,7 +243,34 @@
       }
     }
 
+    stage('Push Images to Private Registry') {
+      steps {
+        sh '''
+          set -euxo pipefail
+          docker push "$BE_IMAGE"
+          docker push "$FE_IMAGE"
+        '''
+      }
+    }
 
+    stage('Deploy to Swarm (remote)') {
+      steps {
+        sshagent(credentials: ['swarm-ssh']) {
+          sh '''
+            set -euxo pipefail
+
+            # chạy docker stack deploy trên swarm manager 192.168.215.181
+            ssh -o StrictHostKeyChecking=no ${SWARM_USER}@${SWARM_HOST} "
+              set -euxo pipefail
+              docker node ls >/dev/null
+              export IMAGE_TAG='${TAG}'
+              docker stack deploy -c '${STACK_FILE}' '${STACK_NAME}'
+              docker stack services '${STACK_NAME}'
+            "
+          '''
+        }
+      }
+    }
 
 
   }
