@@ -151,39 +151,42 @@ pipeline {
     stage('Trivy FS Scan') {
       steps {
         sh 'set -eux'
-        sh 'chmod -R u+w .'
+        sh 'sudo chmod -R u+w .'
         sh 'trivy fs --format table -o fs-report.html .'
       }
     }
-
-    stage('Build-Tag & Push Backend Docker Image') {
-      steps {
-        script {
-          withDockerRegistry(credentialsId: 'docker-cred') {
-            dir('backend') {
-              sh 'docker build -t pnkhanh211/backend:latest .'
-              sh 'trivy image --format table -o backend-image-report.html pnkhanh211/backend:latest '
-              sh 'docker push pnkhanh211/backend:latest'
+    
+    stage('Build Image) {
+      parallel {
+        stage('Build-Tag & Push Backend Docker Image') {
+          steps {
+            script {
+              withDockerRegistry(credentialsId: 'docker-cred') {
+                dir('backend') {
+                  sh 'docker build -t pnkhanh211/backend:latest .'
+                  sh 'trivy image --format table -o backend-image-report.html pnkhanh211/backend:latest '
+                  sh 'docker push pnkhanh211/backend:latest'
+                }
+              }
             }
           }
         }
-      }
-    }  
             
-    stage('Build-Tag & Push Frontend Docker Image') {
-      steps {
-        script {
-          withDockerRegistry(credentialsId: 'docker-cred') {
-            dir('frontend') {
-              sh 'docker build -t pnkhanh211/frontend:latest .'
-              sh 'trivy image --format table -o frontend-image-report.html pnkhanh211/frontend:latest '
-              sh 'docker push pnkhanh211/frontend:latest'
+        stage('Build-Tag & Push Frontend Docker Image') {
+          steps {
+            script {
+              withDockerRegistry(credentialsId: 'docker-cred') {
+                dir('frontend') {
+                  sh 'docker build -t pnkhanh211/frontend:latest .'
+                  sh 'trivy image --format table -o frontend-image-report.html pnkhanh211/frontend:latest '
+                  sh 'docker push pnkhanh211/frontend:latest'
+                }
+              }
             }
           }
-        }
+        }    
       }
-    }    
-
+    }
 
   }
 }
