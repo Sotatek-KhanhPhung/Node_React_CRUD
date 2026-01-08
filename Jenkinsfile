@@ -205,7 +205,7 @@
                 --severity HIGH,CRITICAL \
                 --format table \
                 -o "$WORKSPACE/trivy-reports/backend-image-report.txt" \
-                test-web-backend:latest
+                pnkhanh211/test-web-backend:latest
             '''
           }
         }
@@ -221,7 +221,7 @@
                 --severity HIGH,CRITICAL \
                 --format table \
                 -o "$WORKSPACE/trivy-reports/frontend-image-report.txt" \
-                test-web-frontend:latest
+                pnkhanh211/test-web-frontend:latest
             '''
           }
         }
