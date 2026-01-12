@@ -106,12 +106,9 @@ jobs:
           SONAR_HOST_URL: 'http://192.168.215.180:9090'
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=react-nodejs-project-github-action \
+            -Dsonar.projectKey=react-nodejs-project-github-actions \
             -Dsonar.projectName=react-nodejs-project-github-actions \
             -Dsonar.projectVersion=v1.0.0
-
-
-
 
   trivy_fs:
     runs-on: self-hosted
