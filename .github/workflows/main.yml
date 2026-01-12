@@ -127,13 +127,6 @@ jobs:
             context: frontend
     steps:
       - uses: actions/checkout@v4
-
-#      - name: Docker login to private registry
-#        run: |
-#          set -eux
-#          echo "${{ secrets.REGISTRY_USERNAME }}" | docker login 192.168.215.181:5000 \
-#          -u "${{ secrets.REGISTRY_PASSWORD }}" \
-#          --password-stdin
           
       - name: Build image (${{ matrix.app }})
         run: |
@@ -190,11 +183,7 @@ jobs:
           - app: frontend
             image: 192.168.215.181:5000/test-web/frontend:build-${{ github.run_number }}
     steps:
-#      - name: Docker login to private registry
-#        run: |
-#          set -eux
-#          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login $REGISTRY -u $REGISTRY_USERNAME --password-stdin
-
+    
       - name: Push image (${{ matrix.app }})
         run: |
           set -euxo pipefail
