@@ -140,7 +140,7 @@ jobs:
           path: trivy-reports/fs-report.txt
           if-no-files-found: warn
 
-  build_scan_push:
+  build_images:
     runs-on: self-hosted
     needs: [sonar, trivy_fs]
     strategy:
@@ -150,12 +150,9 @@ jobs:
           - app: backend
             image: 192.168.215.181:5000/test-web/backend:build-${{ github.run_number }}
             context: backend
-            report: trivy-reports/backend-image-report.txt
           - app: frontend
             image: 192.168.215.181:5000/test-web/frontend:build-${{ github.run_number }}
             context: frontend
-            report: trivy-reports/frontend-image-report.txt
-
     steps:
       - uses: actions/checkout@v4
 
@@ -169,12 +166,30 @@ jobs:
           set -euxo pipefail
           docker build -t "${{ matrix.image }}" "${{ matrix.context }}"
 
+  trivy_image:
+    runs-on: self-hosted
+    needs: [build_images]
+    strategy:
+      matrix:
+        app: [backend, frontend]
+        include:
+          - app: backend
+            image: 192.168.215.181:5000/test-web/backend:build-${{ github.run_number }}
+            report: trivy-reports/backend-image-report.txt
+          - app: frontend
+            image: 192.168.215.181:5000/test-web/frontend:build-${{ github.run_number }}
+            report: trivy-reports/frontend-image-report.txt
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Trivy image scan (${{ matrix.app }})
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-cache
         run: |
           set -euxo pipefail
           mkdir -p trivy-reports
-          # scan NGAY image vừa build (không pull từ registry)
           trivy image \
+            --cache-dir "$TRIVY_CACHE_DIR" \
             --scanners vuln \
             --severity HIGH,CRITICAL \
             --format table \
@@ -189,6 +204,23 @@ jobs:
           path: ${{ matrix.report }}
           if-no-files-found: warn
 
+  push_images:
+    runs-on: self-hosted
+    needs: [trivy_image]
+    strategy:
+      matrix:
+        app: [backend, frontend]
+        include:
+          - app: backend
+            image: 192.168.215.181:5000/test-web/backend:build-${{ github.run_number }}
+          - app: frontend
+            image: 192.168.215.181:5000/test-web/frontend:build-${{ github.run_number }}
+    steps:
+      - name: Docker login to private registry
+        run: |
+          set -eux
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login $REGISTRY -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
       - name: Push image (${{ matrix.app }})
         run: |
           set -euxo pipefail
@@ -196,7 +228,7 @@ jobs:
 
   deploy_swarm:
     runs-on: self-hosted
-    needs: [build_scan_push]
+    needs: [push_images]
     steps:
       - name: Setup SSH key
         run: |
