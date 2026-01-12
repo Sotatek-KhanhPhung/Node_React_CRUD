@@ -102,14 +102,14 @@ jobs:
 
       - name: SonarQube Scan (self-hosted)
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  
+          SONAR_TOKEN: 'squ_3c1ebeecd2253ead3ced5bf34a87297067328c54'
+          SONAR_HOST_URL: 'http://192.168.215.180:9090'
         run: |
           sonar-scanner \
-            -Dsonar.projectKey=node-react-crud \
-            -Dsonar.sources=backend,frontend \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN
+            -Dsonar.projectKey=react-nodejs-project-github-action \
+            -Dsonar.projectName=react-nodejs-project-github-actions \
+            -Dsonar.projectVersion=v1.0.0
+
 
 
 
