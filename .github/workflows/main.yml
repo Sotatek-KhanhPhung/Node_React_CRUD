@@ -15,7 +15,6 @@ env:
   SWARM_USER: registry
   STACK_FILE: /opt/stacks/test-web/stack.yml
   STACK_NAME: test-web
-  REGISTRY_USERNAME: registry
 
 jobs:
   verify:
@@ -130,13 +129,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Docker login to private registry
-        env:
-          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
           set -eux
-          echo "$REGISTRY_PASSWORD" | docker login 192.168.215.181:5000 \
-          -u "$REGISTRY_USERNAME" \
+          echo "${{ secrets.REGISTRY_USERNAME }}" | docker login 192.168.215.181:5000 \
+          -u "${{ secrets.REGISTRY_PASSWORD }}" \
           --password-stdin
           
       - name: Build image (${{ matrix.app }})
