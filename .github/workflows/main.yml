@@ -102,15 +102,15 @@ jobs:
 
       - name: SonarQube Scan (self-hosted)
         env:
-          SONAR_TOKEN: ''
-          SONAR_HOST_URL: 'http://192.168.215.180:9000'
-          SONAR_SCANNER_OPTS: "-Dsonar.scanner.forceUseClassicScanner=true"
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
         run: |
-#          sonar-scanner \
-#            -Dsonar.projectKey=node-react-crud \
-#            -Dsonar.sources=backend,frontend \
-#            -Dsonar.host.url=$SONAR_HOST_URL \
-#            -Dsonar.token=$SONAR_TOKEN
+          sonar-scanner \
+          -Dsonar.projectKey=node-react-crud \
+          -Dsonar.organization=sotatek \
+          -Dsonar.sources=backend,frontend \
+          -Dsonar.host.url=$SONAR_HOST_URL \
+          -Dsonar.login=$SONAR_TOKEN
         
   build_images:
     runs-on: self-hosted
