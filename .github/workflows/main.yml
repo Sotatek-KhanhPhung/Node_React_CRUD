@@ -97,17 +97,20 @@ jobs:
     needs: [eslint]
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: true
 
-      - name: SonarQube Scan (ARM64 native)
+      - name: SonarQube Scan (self-hosted)
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  
         run: |
           sonar-scanner \
             -Dsonar.projectKey=node-react-crud \
             -Dsonar.sources=backend,frontend \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.token=$SONAR_TOKEN
+
 
 
   trivy_fs:
