@@ -93,23 +93,22 @@ jobs:
           if-no-files-found: warn
 
   sonar:
-    runs-on: self-hosted
-    needs: [eslint, gitleaks]
-    steps:
-      - uses: actions/checkout@v4
+  runs-on: self-hosted
+  needs: [eslint]
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@v3
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: SonarQube Scan (ARM64 native)
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      run: |
+        sonar-scanner \
+          -Dsonar.projectKey=node-react-crud \
+          -Dsonar.sources=backend,frontend \
+          -Dsonar.host.url=$SONAR_HOST_URL \
+          -Dsonar.login=$SONAR_TOKEN
 
-      - name: Quality Gate
-        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 60
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   trivy_fs:
     runs-on: self-hosted
