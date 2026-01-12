@@ -211,7 +211,7 @@ jobs:
       - name: Deploy to Swarm (local on node 180)
         env:
           TAG: build-${{ github.run_number }}
-          STACK_FILE: stack.yml
+          STACK_FILE: /opt/stacks/test-web/stack.yml
           STACK_NAME: test-web
         
         run: |
