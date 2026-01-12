@@ -102,7 +102,7 @@ jobs:
 
       - name: SonarQube Scan (self-hosted)
         env:
-          SONAR_TOKEN: 'squ_3c1ebeecd2253ead3ced5bf34a87297067328c54'
+          SONAR_TOKEN: ''
           SONAR_HOST_URL: 'http://192.168.215.180:9000'
           SONAR_SCANNER_OPTS: "-Dsonar.scanner.forceUseClassicScanner=true"
         run: |
