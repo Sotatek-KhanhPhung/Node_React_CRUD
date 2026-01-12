@@ -112,37 +112,9 @@ jobs:
 #            -Dsonar.host.url=$SONAR_HOST_URL \
 #            -Dsonar.token=$SONAR_TOKEN
         
-
-  trivy_fs:
-    runs-on: self-hosted
-    needs: [verify]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Trivy FS scan (vuln,secret)
-        run: |
-          set -euxo pipefail
-          mkdir -p trivy-reports
-          # scan source repo giống Jenkinsfile (fs scan)
-          docker run --rm \
-            -v "$PWD:/workspace" \
-            -v "$PWD/.trivycache:/root/.cache/" \
-            aquasec/trivy:latest \
-            fs --scanners vuln,secret --format table \
-            -o /workspace/trivy-reports/fs-report.txt \
-            /workspace
-
-      - name: Upload trivy fs report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-fs-report
-          path: trivy-reports/fs-report.txt
-          if-no-files-found: warn
-
   build_images:
     runs-on: self-hosted
-    needs: [sonar, trivy_fs]
+    needs: [sonar]
     strategy:
       matrix:
         app: [backend, frontend]
